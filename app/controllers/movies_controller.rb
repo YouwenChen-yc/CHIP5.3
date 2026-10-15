@@ -5,33 +5,35 @@ class MoviesController < ApplicationController
   def index
     @all_ratings = Movie.all_ratings
 
-    # 1. If params are missing but session has saved values, perform a RESTful redirect
-    if params[:sort_by].nil? && params[:ratings].nil? && (session[:sort_by].present? || session[:ratings].present?)
-      flash.keep
-      redirect_to movies_path(sort_by: session[:sort_by], ratings: session[:ratings]) and return
+    # 1. Parse ratings parameter (supports Hash, Array, or nil)
+    ratings_param = params[:ratings]
+
+    if ratings_param.present?
+      @ratings_to_show = ratings_param.is_a?(Hash) ? ratings_param.keys : Array(ratings_param)
+      session[:ratings] = Hash[@ratings_to_show.map { |r| [r, "1"] }]
+    elsif params[:commit].present? || params[:ratings_submit].present?
+      # If form submitted with all boxes unchecked, reset to show all ratings
+      @ratings_to_show = @all_ratings
+      session[:ratings] = Hash[@all_ratings.map { |r| [r, "1"] }]
+    elsif session[:ratings].present?
+      @ratings_to_show = session[:ratings].is_a?(Hash) ? session[:ratings].keys : Array(session[:ratings])
+    else
+      @ratings_to_show = @all_ratings
     end
 
-    # 2. Update session with new sort_by setting if provided
+    # 2. Parse sorting parameter
     if params[:sort_by].present?
       session[:sort_by] = params[:sort_by]
     end
     @sort_by = session[:sort_by]
 
-    # 3. Update session with new ratings filter settings
-    if params[:ratings].present?
-      session[:ratings] = params[:ratings]
-      @ratings_to_show = params[:ratings].keys
-    elsif params[:sort_by].present? || params[:commit].present?
-      # If form submitted with all boxes unchecked, reset to show all ratings
-      session[:ratings] = Hash[@all_ratings.map { |r| [r, "1"] }]
-      @ratings_to_show = @all_ratings
-    elsif session[:ratings].present?
-      @ratings_to_show = session[:ratings].keys
-    else
-      @ratings_to_show = @all_ratings
+    # 3. Handle session redirect if visiting index with missing params when session state exists
+    if params[:sort_by].nil? && params[:ratings].nil? && (session[:sort_by].present? || session[:ratings].present?)
+      flash.keep
+      redirect_to movies_path(sort_by: session[:sort_by], ratings: session[:ratings]) and return
     end
 
-    # 4. Query database with active ratings and sorting
+    # 4. Fetch filtered and sorted movies
     @movies = Movie.with_ratings(@ratings_to_show)
 
     if %w[title release_date].include?(@sort_by)

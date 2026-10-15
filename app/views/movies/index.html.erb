@@ -25,25 +25,15 @@
   <%= submit_tag 'Refresh', id: 'ratings_submit', class: 'btn btn-primary' %>
 <% end %>
 
-<table class="table table-striped col-md-12" id="movies">
-  <thead>
-    <tr>
-      <th>Movie Title</th>
-      <th>Rating</th>
-      <th>Release Date</th>
-      <th>More Info</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @movies.each do |movie| %>
-      <tr>
-        <td><%= movie.title %></td>
-        <td><%= movie.rating %></td>
-        <td><%= movie.release_date %></td>
-        <td><%= link_to "More about #{movie.title}", movie_path(movie) %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+<div id="movies">
+  <% @movies.each do |movie| %>
+    <div id="<%= dom_id movie %>" class="movie mb-3 p-2 border rounded">
+      <%= render movie %>
+      <p>
+        <%= link_to "Show this movie", movie %>
+      </p>
+    </div>
+  <% end %>
+</div>
 
-<%= link_to "Add new movie", new_movie_path, class: 'btn btn-primary' %>
+<%= link_to "New movie", new_movie_path, class: 'btn btn-primary mt-2' %>
