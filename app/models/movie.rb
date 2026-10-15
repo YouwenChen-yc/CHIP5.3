@@ -4,12 +4,11 @@ class Movie < ApplicationRecord
   end
 
   def self.with_ratings(ratings_list)
-    # If ratings_list is nil or empty, return all movies
-    if ratings_list.nil? || ratings_list.empty?
+    if ratings_list.blank?
       Movie.all
     else
-      # Perform case-insensitive search or array match on rating column
-      Movie.where(rating: ratings_list.map(&:upcase))
+      formatted_ratings = Array(ratings_list).map { |r| r.to_s.upcase }
+      Movie.where(rating: formatted_ratings)
     end
   end
 end
